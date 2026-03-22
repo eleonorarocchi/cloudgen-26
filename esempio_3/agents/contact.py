@@ -1,20 +1,28 @@
 # agents/contact.py
+
+# L'agente contatto deve fare tre domande in sequenza:
+#   su turni separati, 
+#   ricordando le risposte precedenti.
+# Lo fa utilizzando State, uno TypedDict condiviso.
+
 import re
 from langchain_core.messages import AIMessage
 from state import State
 
 EMAIL_REGEX = re.compile(r"[^@\s]+@[^@\s]+\.[^@\s]+")
 
-
+# Funzione di utilità per capire se un testo sembra un'email.
 def _sembra_email(testo: str) -> bool:
     return bool(EMAIL_REGEX.search(testo))
 
 
 def contact_node(state: State) -> dict:
+    # dove siamo nel flusso
     step  = state.get("contact_step")
+    #cosa ha scritto l'utente 
     testo = state["messages"][-1].content.strip()
 
-    # ── Turno 1: primo contatto — chiedi il motivo ────────────────────
+    # ── Turno 1: primo contatto con l'utente
     if step is None:
         return {
             "messages": [AIMessage(content=(
@@ -24,10 +32,11 @@ def contact_node(state: State) -> dict:
             "contact_step": "ask_reason"
         }
 
-    # ── Turno 2: aspettiamo il motivo ─────────────────────────────────
+    # ── Turno 2: aspettiamo il motivo 
     if step == "ask_reason":
-        # Difesa: se l'utente ha già scritto l'email al posto del motivo,
-        # la accettiamo come email e saltiamo il passo
+        # Si aspetta il motivo, ma prima controlla se l'utente ha scritto un'email al posto del motivo.
+        
+        # In quel caso rimane sullo stesso step invece di andare avanti. 
         if _sembra_email(testo):
             return {
                 "messages": [AIMessage(content=(
@@ -37,6 +46,7 @@ def contact_node(state: State) -> dict:
                 "contact_step": "ask_reason"   # restiamo qui
             }
 
+        # Se il testo sembra un motivo valido, lo salva in contact_reason e avanza.
         return {
             "messages": [AIMessage(content=(
                 f"Perfetto, ho preso nota: _{testo}_\n\n"
@@ -50,12 +60,15 @@ def contact_node(state: State) -> dict:
     if step == "ask_email":
         match = EMAIL_REGEX.search(testo)
 
+        # Cerca un'email con regex nel testo. 
+        # Se non la trova, rimanda indietro senza aggiornare contact_step — al prossimo turno si ritorna qui. 
         if not match:
             return {"messages": [AIMessage(content=(
                 "Non trovo un'email valida nel messaggio. 🤔\n"
                 "Potresti riprovare? _(es. nome@esempio.com)_"
             ))]}
 
+        # Se la trova, salva l'email e chiude il flusso con "done".
         email  = match.group(0)
         reason = state.get("contact_reason", "—")
         return {

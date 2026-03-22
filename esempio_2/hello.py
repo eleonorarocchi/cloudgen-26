@@ -26,9 +26,19 @@ def chat(user_input: str) -> str:
     return response.content
 
 
-# Proviamo la memoria
-print(chat("Ciao! Mi chiamo Eleonora."))
+# Proviamo la memoria, es.: Ciao! Mi chiamo Eleonora.
+domanda = input("Tu: ") 
+print(chat(domanda))
+
 print("---")
-print(chat("Come mi chiamo?"))   # deve ricordare "Giulia"
+
+# Proviamo a vedere se ricorda, es.: Come mi chiamo?
+domanda = input("Tu: ") 
+print(chat(domanda))   # deve ricordare "Eleonora"
+
 print("---")
-print(chat("E qual era il mio saluto?"))
+
+# Proviamo a vedere se ricorda, es.: Qual era il mio saluto?
+domanda = input("Tu: ") 
+
+print(chat(domanda))  # deve ricordare "Ciao! Mi chiamo Eleonora."

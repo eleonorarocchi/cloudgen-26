@@ -1,9 +1,12 @@
 # agents/kb.py
+
+# Agente stateless: riceve il messaggio, risponde, stop.
+
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from state import State
 
-# La knowledge base vive qui, vicino all'agente che la usa
+# Definizione della knowledge base
 DOCS = [
     {
         "keywords": ["prezzo", "costo", "piano", "€"],
@@ -24,6 +27,9 @@ DOCS = [
 ]
 
 
+# Funzione di ricerca nella KB.
+# per ogni documento controlla se almeno una delle sue keyword compare nel testo della query.
+#   In un caso reale qui ci starebbe un motore full-text o una RAG con embedding
 def _search(query: str) -> str:
     """Cerca i documenti rilevanti per keyword. Funzione privata del modulo."""
     q       = query.lower()
@@ -32,6 +38,11 @@ def _search(query: str) -> str:
     #                                          ↑ fallback: restituisce tutto
 
 
+# Prende in input lo state, 
+# prende l'ultimo messaggio,
+# cerca nella KB,
+# genera una risposta basata sui documenti trovati 
+# ritorna lo state aggiornato con la risposta.
 def kb_node(state: State, llm: ChatAnthropic) -> dict:
     """Cerca nella KB e genera una risposta basata sui documenti trovati."""
     query   = state["messages"][-1].content
